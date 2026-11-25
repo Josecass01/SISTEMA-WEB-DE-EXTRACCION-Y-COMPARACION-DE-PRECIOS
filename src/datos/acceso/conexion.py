@@ -72,7 +72,7 @@ def prepararBaseDeDatos() -> None:
             registro.info("Base de datos creada a partir de %s", configuracion.RUTA_BASE_DE_DATOS_INICIAL)
     with conectar() as conexion:
         conexion.executescript(ESQUEMA)
-
+        conexion.execute("PRAGMA journal_mode = WAL")
 
 @contextmanager
 def conectar() -> Iterator[sqlite3.Connection]:
