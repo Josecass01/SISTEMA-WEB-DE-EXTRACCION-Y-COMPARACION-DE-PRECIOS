@@ -98,13 +98,25 @@ class AgenteD1(AgenteDeSupermercado):
         return list(publicados.values())
 
     def _cargarTodos(self, pagina) -> None:
-        """Pulsa «Ver más productos» hasta que la categoría muestre todos sus productos."""
+        """
+        Pulsa «Ver más productos» hasta que la categoría muestre todos sus productos.
+        Si el botón se reemplaza mientras la página carga, se vuelve a buscar; si
+        sigue fallando, se conservan las tarjetas que ya se cargaron.
+        """
+        from playwright.sync_api import Error as ErrorPlaywright
+
+        fallos = 0
         for _ in range(MAXIMO_CLICS_VER_MAS):
             boton = pagina.get_by_text("Ver más productos", exact=False)
-            if boton.count() == 0 or not boton.first.is_visible():
-                return
-            boton.first.scroll_into_view_if_needed()
-            boton.first.click()
+            try:
+                if boton.count() == 0 or not boton.first.is_visible():
+                    return
+                boton.first.click(timeout=10_000)
+                fallos = 0
+            except ErrorPlaywright:
+                fallos += 1
+                if fallos >= 3:
+                    return
             pagina.wait_for_timeout(2500)
 
     @staticmethod
