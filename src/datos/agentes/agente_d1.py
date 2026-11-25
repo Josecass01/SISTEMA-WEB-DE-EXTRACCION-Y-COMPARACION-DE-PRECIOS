@@ -31,6 +31,10 @@ URLS_CATEGORIAS = [
 ]
 ESPERA_RENDERIZADO_MS = 6000
 MAXIMO_CLICS_VER_MAS = 30
+TIEMPO_MAXIMO_PAGINA_MS = 120_000
+# Si una categoría no carga o trae muy pocas tarjetas (página incompleta), se reintenta.
+INTENTOS_POR_CATEGORIA = 2
+MINIMO_TARJETAS_ESPERADAS = 20
 
 # Devuelve el texto de cada tarjeta de producto visible en la página.
 EXTRAER_TARJETAS = """
@@ -74,13 +78,19 @@ class AgenteD1(AgenteDeSupermercado):
                            lambda ruta: ruta.abort())
             pagina = contexto.new_page()
             for url_categoria in URLS_CATEGORIAS:
-                try:
-                    pagina.goto(url_categoria, wait_until="domcontentloaded", timeout=60_000)
-                    pagina.wait_for_timeout(ESPERA_RENDERIZADO_MS)
-                    self._cargarTodos(pagina)
-                    tarjetas = pagina.evaluate(EXTRAER_TARJETAS)
-                except ErrorPlaywright as exc:
-                    registro.warning("D1 no respondió en %s: %s", url_categoria, exc)
+                tarjetas = None
+                for intento in range(1, INTENTOS_POR_CATEGORIA + 1):
+                    try:
+                        tarjetas = self._leerCategoria(pagina, url_categoria)
+                    except ErrorPlaywright as exc:
+                        registro.warning("D1 no respondió en %s (intento %d): %s",
+                                         url_categoria, intento, str(exc).splitlines()[0])
+                        continue
+                    if len(tarjetas) >= MINIMO_TARJETAS_ESPERADAS:
+                        break
+                    registro.warning("D1 %s: solo %d tarjetas (intento %d)",
+                                     url_categoria, len(tarjetas), intento)
+                if tarjetas is None:
                     continue
                 paginas_cargadas += 1
                 tarjetas_encontradas += len(tarjetas)
@@ -96,6 +106,17 @@ class AgenteD1(AgenteDeSupermercado):
         if tarjetas_encontradas == 0:
             raise FormatoNoReconocido("No se encontraron tarjetas de producto en el sitio de D1.")
         return list(publicados.values())
+
+    def _leerCategoria(self, pagina, url: str) -> list[dict]:
+        """Abre una categoría, espera sus tarjetas, carga todas y devuelve su texto."""
+        pagina.goto(url, wait_until="domcontentloaded", timeout=TIEMPO_MAXIMO_PAGINA_MS)
+        try:
+            pagina.wait_for_selector("a[href*='/p']", timeout=30_000)
+        except Exception:
+            pass
+        pagina.wait_for_timeout(ESPERA_RENDERIZADO_MS)
+        self._cargarTodos(pagina)
+        return pagina.evaluate(EXTRAER_TARJETAS)
 
     def _cargarTodos(self, pagina) -> None:
         """
