@@ -155,7 +155,12 @@ class ProductoDAC(IProductoDAC):
                 for f in conexion.execute("SELECT id_cadena, nombre FROM cadena_supermercado")}
 
     def _cargarEtiquetasVigentes(self, conexion, productos: list[Producto], cadena: str | None) -> None:
-        """Agrega a cada producto la etiqueta más reciente de cada cadena."""
+        """
+        Agrega a cada producto su etiqueta de la última recolección de cada cadena.
+        Un precio que la cadena ya no publicó en su última recolección no es vigente
+        y no se presenta (se conserva en el historial). Si la recolección de una
+        cadena se pausó, su última recolección sigue siendo la anterior.
+        """
         if not productos:
             return
         cadenas = self._cadenas(conexion)
@@ -171,6 +176,8 @@ class ProductoDAC(IProductoDAC):
             JOIN (SELECT id_producto, id_cadena, MAX(fecha) AS fecha FROM etiqueta_anaquel
                   WHERE id_producto IN ({marcadores}) GROUP BY id_producto, id_cadena) v
               ON v.id_producto = e.id_producto AND v.id_cadena = e.id_cadena AND v.fecha = e.fecha
+            JOIN (SELECT id_cadena, MAX(fecha) AS fecha FROM etiqueta_anaquel GROUP BY id_cadena) u
+              ON u.id_cadena = e.id_cadena AND u.fecha = e.fecha
             WHERE 1 = 1 {filtro_cadena}"""
         for e in conexion.execute(consulta, parametros):
             producto = por_id[e["id_producto"]]
