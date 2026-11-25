@@ -27,12 +27,13 @@ ENCABEZADOS = {
     "Accept": "application/json",
     "Accept-Language": "es-CO,es;q=0.9",
 }
-# Términos de la canasta familiar que se consultan cada día.
+# Términos de la canasta familiar que se consultan cada día. Van en una sola
+# palabra porque la búsqueda de Olímpica rechaza (HTTP 400) los términos con espacios.
 TERMINOS = [
     "arroz", "aceite", "azucar", "sal", "pasta", "lenteja", "frijol", "harina", "avena",
     "cafe", "chocolate", "panela", "leche", "queso", "mantequilla", "yogur", "huevos",
     "atun", "pollo", "carne", "salchicha", "pan", "galleta", "jugo", "agua", "gaseosa",
-    "jabon", "detergente", "papel higienico", "crema dental", "shampoo", "suavizante",
+    "jabon", "detergente", "higienico", "dental", "shampoo", "suavizante",
 ]
 TAMANO_PAGINA = 50
 PAGINAS_POR_TERMINO = 4

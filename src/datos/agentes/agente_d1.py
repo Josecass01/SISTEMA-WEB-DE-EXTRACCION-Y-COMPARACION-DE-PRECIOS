@@ -1,17 +1,19 @@
 """
 Agente de servicio de D1 (Figura 15).
 
-El sitio de domicilios de D1 genera los precios con JavaScript; por eso se
-recorre con navegación automatizada (Playwright y Chromium, Tabla 22).
+El sitio de D1 (www.d1.com.co) genera los productos y sus precios con
+JavaScript; por eso se recorre con navegación automatizada (Playwright y
+Chromium, Tabla 22). Cada tarjeta se reconoce por su enlace al producto
+(dirección terminada en /p) y por el precio en pesos que contiene, y no por
+nombres de clases, que el sitio cambia con frecuencia.
 """
 
 from __future__ import annotations
 
 import logging
 import random
+import re
 import time
-
-from bs4 import BeautifulSoup
 
 from .agente_de_supermercado import (AgenteDeSupermercado, FormatoNoReconocido,
                                      FuenteNoDisponible, ProductoPublicado)
@@ -20,18 +22,34 @@ from .conversion import extraerContenido, limpiarNombre, limpiarPrecio
 registro = logging.getLogger(__name__)
 
 URLS_CATEGORIAS = [
-    "https://domicilios.tiendasd1.com/ca/lacteos/L%C3%81CTEOS",
-    "https://domicilios.tiendasd1.com/ca/alimentos%20y%20despensa/ALIMENTOS%20Y%20DESPENSA",
-    "https://domicilios.tiendasd1.com/ca/bebidas/BEBIDAS",
-    "https://domicilios.tiendasd1.com/ca/aseo%20hogar/ASEO%20HOGAR",
-    "https://domicilios.tiendasd1.com/ca/aseo%20y%20cuidado%20personal/ASEO%20Y%20CUIDADO%20PERSONAL",
-    "https://domicilios.tiendasd1.com/ca/congelados/CONGELADOS",
+    "https://www.d1.com.co/despensa",
+    "https://www.d1.com.co/lacteos-y-huevos",
+    "https://www.d1.com.co/bebidas",
+    "https://www.d1.com.co/pollo-carne-y-pescado",
+    "https://www.d1.com.co/hogar/aseo-y-limpieza",
+    "https://www.d1.com.co/cuidado-personal-y-belleza",
 ]
-SELECTOR_PRODUCTO = "[class*='product-card']"
-SELECTOR_NOMBRE = "h3[class*='prod__name']"
-SELECTOR_PRECIO = "p[class*='base__price']"
 ESPERA_RENDERIZADO_MS = 6000
-MAXIMO_PAGINAS = 15
+MAXIMO_CLICS_VER_MAS = 30
+
+# Devuelve el texto de cada tarjeta de producto visible en la página.
+EXTRAER_TARJETAS = """
+() => {
+  const vistos = new Set(), tarjetas = [];
+  for (const enlace of document.querySelectorAll("a[href*='/p']")) {
+    const url = enlace.href.split('?')[0];
+    if (!/\\/p$/.test(url) || vistos.has(url)) continue;
+    let nodo = enlace;
+    for (let i = 0; i < 8 && nodo && !/\\$\\s?[\\d.]+/.test(nodo.innerText || ''); i++) nodo = nodo.parentElement;
+    if (!nodo) continue;
+    vistos.add(url);
+    tarjetas.push({ url: url, texto: nodo.innerText });
+  }
+  return tarjetas;
+}
+"""
+PRECIO = re.compile(r"\$\s?([\d.]+)")
+TEXTOS_IGNORADOS = {"agregar", "+ agregar", "ver más productos"}
 
 
 class AgenteD1(AgenteDeSupermercado):
@@ -50,49 +68,63 @@ class AgenteD1(AgenteDeSupermercado):
         with sync_playwright() as pw:
             navegador = pw.chromium.launch(
                 headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
-            contexto = navegador.new_context(locale="es-CO", timezone_id="America/Bogota")
+            contexto = navegador.new_context(locale="es-CO", timezone_id="America/Bogota",
+                                             viewport={"width": 1366, "height": 900})
             contexto.route("**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,mp4}",
                            lambda ruta: ruta.abort())
             pagina = contexto.new_page()
             for url_categoria in URLS_CATEGORIAS:
-                for numero in range(1, MAXIMO_PAGINAS + 1):
-                    url = url_categoria if numero == 1 else f"{url_categoria}?currentPage={numero}"
-                    try:
-                        pagina.goto(url, wait_until="domcontentloaded", timeout=40_000)
-                        pagina.wait_for_timeout(ESPERA_RENDERIZADO_MS)
-                        pagina.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                        pagina.wait_for_timeout(1500)
-                    except ErrorPlaywright as exc:
-                        registro.warning("D1 no respondió en %s: %s", url, exc)
-                        break
-                    paginas_cargadas += 1
-                    tarjetas = BeautifulSoup(pagina.content(), "html.parser").select(SELECTOR_PRODUCTO)
-                    if not tarjetas:
-                        break
-                    tarjetas_encontradas += len(tarjetas)
-                    for tarjeta in tarjetas:
-                        convertido = self._convertir(tarjeta)
-                        if convertido:
-                            publicados.setdefault(convertido.nombre.lower(), convertido)
-                    if len(tarjetas) < 20:
-                        break
-                    time.sleep(random.uniform(*self._pausa))
+                try:
+                    pagina.goto(url_categoria, wait_until="domcontentloaded", timeout=60_000)
+                    pagina.wait_for_timeout(ESPERA_RENDERIZADO_MS)
+                    self._cargarTodos(pagina)
+                    tarjetas = pagina.evaluate(EXTRAER_TARJETAS)
+                except ErrorPlaywright as exc:
+                    registro.warning("D1 no respondió en %s: %s", url_categoria, exc)
+                    continue
+                paginas_cargadas += 1
+                tarjetas_encontradas += len(tarjetas)
+                registro.info("D1 %s: %d tarjetas", url_categoria, len(tarjetas))
+                for tarjeta in tarjetas:
+                    convertido = self._convertir(tarjeta["texto"])
+                    if convertido:
+                        publicados.setdefault(convertido.nombre.lower(), convertido)
+                time.sleep(random.uniform(*self._pausa))
             navegador.close()
         if paginas_cargadas == 0:
             raise FuenteNoDisponible("El sitio de D1 no respondió.")
         if tarjetas_encontradas == 0:
-            raise FormatoNoReconocido("No se encontraron productos con los selectores de D1.")
+            raise FormatoNoReconocido("No se encontraron tarjetas de producto en el sitio de D1.")
         return list(publicados.values())
 
+    def _cargarTodos(self, pagina) -> None:
+        """Pulsa «Ver más productos» hasta que la categoría muestre todos sus productos."""
+        for _ in range(MAXIMO_CLICS_VER_MAS):
+            boton = pagina.get_by_text("Ver más productos", exact=False)
+            if boton.count() == 0 or not boton.first.is_visible():
+                return
+            boton.first.scroll_into_view_if_needed()
+            boton.first.click()
+            pagina.wait_for_timeout(2500)
+
     @staticmethod
-    def _convertir(tarjeta) -> ProductoPublicado | None:
-        nodo_nombre = tarjeta.select_one(SELECTOR_NOMBRE)
-        nodo_precio = tarjeta.select_one(SELECTOR_PRECIO)
-        if not nodo_nombre or not nodo_precio:
+    def _convertir(texto: str) -> ProductoPublicado | None:
+        """
+        Del texto de una tarjeta (marca, nombre, precio y botón) obtiene el nombre,
+        el contenido neto y el precio. Si la tarjeta muestra dos precios, el mayor es
+        el precio regular y el menor el promocional.
+        """
+        lineas = [l.strip() for l in (texto or "").splitlines() if l.strip()]
+        precios = [limpiarPrecio(m) for l in lineas for m in PRECIO.findall(l)]
+        precios = [p for p in precios if p]
+        candidatas = [l for l in lineas
+                      if "$" not in l and l.lower() not in TEXTOS_IGNORADOS and extraerContenido(l)]
+        if not precios or not candidatas:
             return None
-        nombre = limpiarNombre(nodo_nombre.get_text(strip=True))
-        precio = limpiarPrecio(nodo_precio.get("content") or nodo_precio.get_text())
+        nombre = limpiarNombre(max(candidatas, key=len))
         contenido = extraerContenido(nombre)
-        if not nombre or not precio or not contenido:
+        if not nombre or not contenido:
             return None
-        return ProductoPublicado(nombre, contenido[0], contenido[1], precio, None)
+        precio, minimo = max(precios), min(precios)
+        return ProductoPublicado(nombre, contenido[0], contenido[1], precio,
+                                 minimo if minimo < precio else None)
