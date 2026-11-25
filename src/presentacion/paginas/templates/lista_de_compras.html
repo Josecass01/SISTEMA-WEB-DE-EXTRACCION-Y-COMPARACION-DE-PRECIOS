@@ -61,8 +61,9 @@
     <tr class="{{ 'destacada' if c.esLaMasEconomica }}">
       <td>{{ loop.index }}</td>
       <th scope="row">{{ c.cadena.nombre }}{% if c.esLaMasEconomica %} <span class="insignia">Opción más económica</span>{% endif %}</th>
-      <td class="numero">{{ pesos(c.costoTotal) }}</td>
-      <td>{% if c.incluyeTodos %}Incluye todos los productos{% else %}No incluye: {{ c.noIncluidos|map(attribute='producto.descripcion')|join(', ') }}{% endif %}</td>
+      {% set ninguno = c.noIncluidos|length == items|length %}
+      <td class="numero">{% if ninguno %}—{% else %}{{ pesos(c.costoTotal) }}{% endif %}</td>
+      <td>{% if c.incluyeTodos %}Incluye todos los productos{% elif ninguno %}No tiene ninguno de los productos de la lista{% else %}No incluye: {{ c.noIncluidos|map(attribute='producto.descripcion')|join(', ') }}{% endif %}</td>
       <td data-sucursal="{{ c.cadena.nombre }}">—</td>
     </tr>
     {% endfor %}
