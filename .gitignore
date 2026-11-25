@@ -7,6 +7,6 @@ venv/
 .idea/
 .vscode/
 .zed/
-datos/
+/datos/
 *.db-wal
 *.db-shm

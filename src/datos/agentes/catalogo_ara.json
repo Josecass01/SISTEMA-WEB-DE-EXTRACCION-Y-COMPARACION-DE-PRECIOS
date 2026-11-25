@@ -1,0 +1,132 @@
+{
+  "descripcion": "Catálogo simulado de Ara: productos de la canasta familiar colombiana. El precio de referencia es el promedio de los precios de D1 y Olímpica del 2026-06-14 para el mismo producto.",
+  "fechaReferencia": "2026-06-14",
+  "productos": [
+    {
+      "descripcion": "Blanqueador Sin Cloro Lavanda",
+      "categoria": "Aseo del hogar",
+      "contenidoNeto": 1,
+      "unidadDeMedida": "u",
+      "precioReferencia": 6420
+    },
+    {
+      "descripcion": "Crema Dental Blanqueadora 75ml",
+      "categoria": "Aseo personal",
+      "contenidoNeto": 75,
+      "unidadDeMedida": "ml",
+      "precioReferencia": 11920
+    },
+    {
+      "descripcion": "Jabón Lak Bebe 110 G X3 Unds",
+      "categoria": "Aseo personal",
+      "contenidoNeto": 110,
+      "unidadDeMedida": "g",
+      "precioReferencia": 6200
+    },
+    {
+      "descripcion": "CAFE COLCAFE CLASICO 50 g",
+      "categoria": "Bebidas",
+      "contenidoNeto": 50,
+      "unidadDeMedida": "g",
+      "precioReferencia": 11980
+    },
+    {
+      "descripcion": "Chocolate Tesalia 200G",
+      "categoria": "Bebidas",
+      "contenidoNeto": 200,
+      "unidadDeMedida": "g",
+      "precioReferencia": 17800
+    },
+    {
+      "descripcion": "Jugo Frutto Néctar Pera 1 Lt",
+      "categoria": "Bebidas",
+      "contenidoNeto": 1000,
+      "unidadDeMedida": "ml",
+      "precioReferencia": 5540
+    },
+    {
+      "descripcion": "Jugo Medalla de Oro Mandarina 500 Ml",
+      "categoria": "Bebidas",
+      "contenidoNeto": 500,
+      "unidadDeMedida": "ml",
+      "precioReferencia": 3480
+    },
+    {
+      "descripcion": "Jugo Sprimi2 Naranja 1L",
+      "categoria": "Bebidas",
+      "contenidoNeto": 1000,
+      "unidadDeMedida": "ml",
+      "precioReferencia": 7300
+    },
+    {
+      "descripcion": "Sal de Mesa 1kg",
+      "categoria": "Condimentos",
+      "contenidoNeto": 1000,
+      "unidadDeMedida": "g",
+      "precioReferencia": 3050
+    },
+    {
+      "descripcion": "Arroz Blanco 500g",
+      "categoria": "Granos y cereales",
+      "contenidoNeto": 500,
+      "unidadDeMedida": "g",
+      "precioReferencia": 1620
+    },
+    {
+      "descripcion": "Galletas de Arroz Naruna con Almendras X2 Unds",
+      "categoria": "Granos y cereales",
+      "contenidoNeto": 2,
+      "unidadDeMedida": "u",
+      "precioReferencia": 6350
+    },
+    {
+      "descripcion": "Maíz Pira Tot 500 G",
+      "categoria": "Granos y cereales",
+      "contenidoNeto": 500,
+      "unidadDeMedida": "g",
+      "precioReferencia": 5700
+    },
+    {
+      "descripcion": "Leche Celema Func Magnesio T/Pack 900Ml",
+      "categoria": "Lácteos",
+      "contenidoNeto": 900,
+      "unidadDeMedida": "ml",
+      "precioReferencia": 4580
+    },
+    {
+      "descripcion": "Leche Entera 1L",
+      "categoria": "Lácteos",
+      "contenidoNeto": 1000,
+      "unidadDeMedida": "ml",
+      "precioReferencia": 3250
+    },
+    {
+      "descripcion": "Mantequilla 250g",
+      "categoria": "Lácteos",
+      "contenidoNeto": 250,
+      "unidadDeMedida": "g",
+      "precioReferencia": 5050
+    },
+    {
+      "descripcion": "Queso Grand'Or Emmentaler",
+      "categoria": "Lácteos",
+      "contenidoNeto": 1,
+      "unidadDeMedida": "u",
+      "precioReferencia": 6500
+    },
+    {
+      "descripcion": "Pan Tajado 500g",
+      "categoria": "Panadería",
+      "contenidoNeto": 500,
+      "unidadDeMedida": "g",
+      "precioReferencia": 12120
+    },
+    {
+      "descripcion": "Mortadela Cunit Linea Económica 250 G",
+      "categoria": "Proteínas",
+      "contenidoNeto": 250,
+      "unidadDeMedida": "g",
+      "precioReferencia": 4720
+    }
+  ]
+}
