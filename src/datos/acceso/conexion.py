@@ -1,16 +1,14 @@
-"""Conexión con la base de datos SQLite (modelo de persistencia, Figura 16)."""
+"""Conexión con la base de datos SQLite y esquema del modelo de persistencia (Figura 16)."""
 
 from __future__ import annotations
 
-import logging
+import os
 import shutil
 import sqlite3
 from contextlib import contextmanager
-from typing import Iterator
+from pathlib import Path
 
 from src import configuracion
-
-registro = logging.getLogger(__name__)
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS producto (
@@ -20,12 +18,10 @@ CREATE TABLE IF NOT EXISTS producto (
     contenido_neto  REAL    NOT NULL CHECK (contenido_neto > 0),
     unidad_medida   TEXT    NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS cadena_supermercado (
     id_cadena  INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre     TEXT    NOT NULL UNIQUE
 );
-
 CREATE TABLE IF NOT EXISTS tienda (
     id_tienda  INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cadena  INTEGER NOT NULL REFERENCES cadena_supermercado(id_cadena),
@@ -34,7 +30,6 @@ CREATE TABLE IF NOT EXISTS tienda (
     latitud    REAL    NOT NULL,
     longitud   REAL    NOT NULL
 );
-
 CREATE TABLE IF NOT EXISTS etiqueta_anaquel (
     id_etiqueta         INTEGER PRIMARY KEY AUTOINCREMENT,
     id_producto         INTEGER NOT NULL REFERENCES producto(id_producto),
@@ -45,7 +40,6 @@ CREATE TABLE IF NOT EXISTS etiqueta_anaquel (
     pum                 REAL    NOT NULL,
     UNIQUE (id_producto, id_cadena, fecha)
 );
-
 CREATE TABLE IF NOT EXISTS resultado_recoleccion (
     id_resultado          INTEGER PRIMARY KEY AUTOINCREMENT,
     id_cadena             INTEGER NOT NULL REFERENCES cadena_supermercado(id_cadena),
@@ -53,39 +47,46 @@ CREATE TABLE IF NOT EXISTS resultado_recoleccion (
     estado                TEXT    NOT NULL,
     registros_procesados  INTEGER NOT NULL DEFAULT 0
 );
-
 CREATE INDEX IF NOT EXISTS idx_etiqueta_producto ON etiqueta_anaquel(id_producto, id_cadena, fecha);
 CREATE INDEX IF NOT EXISTS idx_tienda_cadena ON tienda(id_cadena);
 """
 
 
-def prepararBaseDeDatos() -> None:
+def obtenerConexion(ruta: Path | None = None) -> sqlite3.Connection:
+    conexion = sqlite3.connect(ruta or configuracion.RUTA_BASE_DE_DATOS, timeout=30)
+    conexion.row_factory = sqlite3.Row
+    conexion.execute("PRAGMA foreign_keys = ON")
+    conexion.execute("PRAGMA journal_mode = WAL")  # las lecturas no se bloquean durante la escritura
+    return conexion
+
+
+@contextmanager
+def abrir(ruta: Path | None = None):
+    """Abre una conexión, confirma la transacción al terminar (o la deshace si falla) y la cierra."""
+    conexion = obtenerConexion(ruta)
+    try:
+        with conexion:
+            yield conexion
+    finally:
+        conexion.close()
+
+
+def prepararBaseDeDatos(ruta: Path | None = None) -> None:
     """
-    Deja lista la base de datos: la primera vez copia la base inicial
-    (datos_iniciales/paracompara.db); siempre verifica que exista el esquema.
+    Si el archivo de la base de datos no existe (por ejemplo, el volumen recién
+    creado en Railway), copia la base de datos inicial; luego asegura el esquema.
     """
-    ruta = configuracion.RUTA_BASE_DE_DATOS
+    ruta = Path(ruta or configuracion.RUTA_BASE_DE_DATOS)
     if not ruta.exists():
         ruta.parent.mkdir(parents=True, exist_ok=True)
         if configuracion.RUTA_BASE_DE_DATOS_INICIAL.exists():
-            shutil.copyfile(configuracion.RUTA_BASE_DE_DATOS_INICIAL, ruta)
-            registro.info("Base de datos creada a partir de %s", configuracion.RUTA_BASE_DE_DATOS_INICIAL)
-    with conectar() as conexion:
+            # Copia a un archivo temporal y lo renombra, para que el proceso web y el
+            # de recolección, que arrancan a la vez, nunca vean una copia a medias.
+            temporal = ruta.with_name(f"{ruta.name}.{os.getpid()}.tmp")
+            shutil.copyfile(configuracion.RUTA_BASE_DE_DATOS_INICIAL, temporal)
+            if ruta.exists():
+                temporal.unlink()
+            else:
+                os.replace(temporal, ruta)
+    with abrir(ruta) as conexion:
         conexion.executescript(ESQUEMA)
-        conexion.execute("PRAGMA journal_mode = WAL")
-
-@contextmanager
-def conectar() -> Iterator[sqlite3.Connection]:
-    """Abre una conexión; confirma la transacción al salir o la deshace si hay un error."""
-    # La ruta se lee en cada llamada para respetar cambios en la configuración (pruebas).
-    conexion = sqlite3.connect(configuracion.RUTA_BASE_DE_DATOS, timeout=30)
-    conexion.row_factory = sqlite3.Row
-    conexion.execute("PRAGMA foreign_keys = ON")
-    try:
-        yield conexion
-        conexion.commit()
-    except Exception:
-        conexion.rollback()
-        raise
-    finally:
-        conexion.close()

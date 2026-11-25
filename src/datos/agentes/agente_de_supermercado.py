@@ -1,4 +1,11 @@
-"""Interfaz común de los agentes de servicio (patrón Adaptador, Figura 15)."""
+"""
+Interfaz común de los agentes de servicio (Figura 15).
+
+Cada agente convierte el formato propio de su fuente (sitio web o catálogo
+simulado) a la estructura común ProductoPublicado (patrón Adaptador). La
+recolección invoca obtenerProductos() sin conocer cuál agente la atiende
+(polimorfismo y variaciones protegidas).
+"""
 
 from __future__ import annotations
 
@@ -6,41 +13,31 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 
-class FuenteNoDisponible(Exception):
-    """La fuente de la cadena no respondió (CU-S05, extensión 2a)."""
-
-
-class FormatoNoReconocido(Exception):
-    """La fuente respondió con un formato que el agente no reconoce (CU-S05, extensión 2b)."""
-
-
-@dataclass
+@dataclass(frozen=True)
 class ProductoPublicado:
-    """Producto tal como lo publica la cadena, ya convertido a datos del sistema."""
+    """«estructura» con los datos de un producto tal como lo publica una cadena."""
 
     nombre: str
     contenidoNeto: float
     unidadDeMedida: str
     precio: float
     precioPromocional: float | None = None
-    categoria: str = "Sin clasificar"
+
+
+class FormatoNoReconocido(Exception):
+    """La fuente cambió de formato de manera drástica (CU-S05, extensión 2b)."""
+
+
+class FuenteNoDisponible(Exception):
+    """La fuente no responde (CU-S05, extensión 2a)."""
 
 
 class AgenteDeSupermercado(ABC):
-    """Adapta la fuente de una cadena a la lista de productos publicados."""
+    """«interface» AgenteDeSupermercado."""
 
-    @property
+    #: Nombre de la cadena que atiende el agente, igual al registrado en la base de datos.
+    cadena: str = ""
+
     @abstractmethod
-    def cadena(self) -> str: ...
-
-    @abstractmethod
-    def obtenerProductos(self) -> list[ProductoPublicado]: ...
-
-
-# Términos de la canasta familiar que se consultan en las cadenas con búsqueda en línea.
-TERMINOS_DE_BUSQUEDA = [
-    "arroz", "aceite", "azucar", "sal", "panela", "cafe", "chocolate", "leche", "queso", "mantequilla",
-    "margarina", "yogurt", "huevos", "pan tajado", "pasta", "lenteja", "frijol", "garbanzo", "arveja",
-    "harina", "avena", "atun", "pollo", "carne", "salchicha", "mortadela", "jabon", "detergente",
-    "papel higienico", "crema dental", "blanqueador", "agua", "jugo", "galletas",
-]
+    def obtenerProductos(self) -> list[ProductoPublicado]:
+        """Productos y precios publicados por la cadena."""
