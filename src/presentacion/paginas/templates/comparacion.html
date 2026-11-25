@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block titulo %}Comparar precios{% endblock %}
+{% block contenido %}
+<h1>Comparar precios de un producto</h1>
+
+<form class="busqueda" method="get" action="{{ url_for('comparacion') }}" data-espera>
+  <label for="termino">Producto que desea comparar</label>
+  <div class="fila-campos">
+    <input id="termino" name="termino" type="search" value="{{ termino }}" required
+           aria-describedby="ejemplo-busqueda" autocomplete="off">
+    {% if cadena %}<input type="hidden" name="cadena" value="{{ cadena }}">{% endif %}
+    <button type="submit" class="boton principal grande">Buscar</button>
+  </div>
+  <p id="ejemplo-busqueda" class="ayuda">Ejemplo: leche entera 1 L, aceite vegetal, arroz.</p>
+</form>
+
+{% macro url_filtro(c) %}{{ url_for('comparacion', termino=termino, cadena=c) if termino else url_for('comparacion', cadena=c) }}{% endmacro %}
+{% include "_filtro.html" %}
+{% include "_mensaje.html" %}
+
+{% if resultados %}
+<table class="resultados">
+  <caption class="oculto">Opciones encontradas, ordenadas del menor al mayor PUM</caption>
+  <thead>
+    <tr>
+      <th scope="col">N.º</th>
+      <th scope="col">Producto</th>
+      <th scope="col">Supermercado</th>
+      <th scope="col" class="numero">Precio</th>
+      <th scope="col" class="numero">PUM</th>
+      <th scope="col">Historial</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in resultados %}
+    <tr class="{{ 'destacada' if loop.first }}">
+      <td>{{ loop.index }}</td>
+      <th scope="row">{{ e.producto.descripcion }}{% if loop.first %} <span class="insignia">Menor PUM</span>{% endif %}</th>
+      <td>{{ e.cadena.nombre }}</td>
+      <td class="numero">{{ pesos(e.precio) }}{% if e.precioPromocional %}<br><span class="ayuda">Oferta: {{ pesos(e.precioPromocional) }}</span>{% endif %}</td>
+      <td class="numero">{{ pum(e) }}</td>
+      <td><a class="boton secundario" href="{{ url_for('historial', id_producto=e.producto.id, producto=e.producto.descripcion, volver=request.full_path) }}">Ver historial<span class="oculto"> de {{ e.producto.descripcion }}</span></a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

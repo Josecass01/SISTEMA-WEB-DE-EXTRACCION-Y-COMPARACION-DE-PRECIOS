@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Comparador de precios{% endblock %} · Cartagena</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="encabezado">
+    <p class="marca">Comparador de precios · Cartagena</p>
+    <nav aria-label="Menú principal">
+      <ul class="menu">
+        <li><a href="{{ url_for('comparacion') }}" class="boton {{ 'principal' if opcion_activa == 'comparar' else 'secundario' }}" {% if opcion_activa == 'comparar' %}aria-current="page"{% endif %}>Comparar precios</a></li>
+        <li><a href="{{ url_for('lista') }}" class="boton {{ 'principal' if opcion_activa == 'lista' else 'secundario' }}" {% if opcion_activa == 'lista' %}aria-current="page"{% endif %}>Lista de compras</a></li>
+        <li><a href="{{ url_for('tiendas') }}" class="boton {{ 'principal' if opcion_activa == 'tiendas' else 'secundario' }}" {% if opcion_activa == 'tiendas' %}aria-current="page"{% endif %}>Tiendas cercanas</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main id="contenido" tabindex="-1">
+    {% block contenido %}{% endblock %}
+  </main>
+  <footer class="pie">
+    {% if fecha_recoleccion %}<p>Precios recolectados el {{ fecha_recoleccion }}. Los precios de Ara son simulados.</p>
+    {% else %}<p>Los precios de Ara son simulados.</p>{% endif %}
+  </footer>
+  <script src="{{ url_for('static', filename='js/espera.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

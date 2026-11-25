@@ -1,0 +1,93 @@
+/*
+ * Estilos de la interfaz (sección 3.1.2 del Manual del sistema):
+ * texto oscuro sobre fondo claro (contraste WCAG 2.1 AA), una sola familia
+ * tipográfica, texto base amplio, un único color para las acciones y
+ * alineación uniforme a la izquierda.
+ */
+:root {
+  --texto: #1a1a1a;
+  --texto-secundario: #3d3d3d;
+  --fondo: #ffffff;
+  --accion: #0b3d6b;          /* azul oscuro: contraste 11,6:1 con blanco */
+  --resalte: #eef3f8;
+  --borde: #1a1a1a;
+  --error: #8a1c1c;
+  --encabezado-tabla: #e6e6e6;
+}
+* { box-sizing: border-box; }
+html { font-size: 112.5%; }   /* texto base de 18 px; ampliable con el navegador */
+body {
+  margin: 0; background: var(--fondo); color: var(--texto);
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; line-height: 1.5;
+}
+a { color: var(--accion); }
+:focus-visible { outline: 3px solid #f0a500; outline-offset: 2px; }
+
+.saltar { position: absolute; left: -999px; top: 0; background: var(--fondo); padding: .5rem 1rem; }
+.saltar:focus { left: 1rem; z-index: 10; }
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.encabezado {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.5rem; border-bottom: 3px solid var(--accion);
+}
+.marca { margin: 0; font-size: 1.4rem; font-weight: bold; color: var(--accion); }
+.menu { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+
+main { max-width: 70rem; padding: 1.5rem; outline: none; }
+h1 { font-size: 2rem; margin: .5rem 0 1.25rem; }
+h2 { font-size: 1.35rem; margin: 1.75rem 0 .75rem; }
+
+.boton {
+  display: inline-block; padding: .6rem 1.1rem; border-radius: 6px; font: inherit; font-weight: bold;
+  text-decoration: none; cursor: pointer; border: 2px solid var(--accion);
+}
+.boton.principal { background: var(--accion); color: #fff; }
+.boton.secundario { background: var(--fondo); color: var(--accion); }
+.boton.grande { padding: .85rem 1.6rem; font-size: 1.1rem; }
+
+label { display: block; font-weight: bold; margin-bottom: .35rem; }
+input[type=text], input[type=search], input[type=number] {
+  font: inherit; padding: .7rem .8rem; border: 2px solid var(--borde); border-radius: 6px; width: 100%;
+}
+.ayuda { color: var(--texto-secundario); margin: .35rem 0 0; font-size: .95rem; }
+.fila-campos { display: flex; gap: 1rem; }
+.fila-campos input { flex: 1; }
+.agregar, .fechas { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+.agregar .campo.ancho { flex: 1 1 22rem; }
+.agregar .campo { flex: 0 1 9rem; }
+.agregar .ayuda { flex-basis: 100%; margin-top: 0; }
+.fechas .campo { flex: 0 1 14rem; }
+.fechas .boton { align-self: flex-start; margin-top: 2rem; }
+
+.filtro { display: flex; align-items: center; gap: .75rem; margin: 1.25rem 0; }
+.filtro ul { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0; padding: 0; list-style: none; }
+.etiqueta-filtro { font-weight: bold; }
+.chip { display: inline-block; padding: .35rem 1rem; border: 2px solid var(--borde); border-radius: 999px;
+        color: var(--texto); text-decoration: none; }
+.chip[aria-current="true"] { background: var(--texto); color: #fff; }
+
+.mensaje:empty { display: none; }
+.mensaje { background: var(--resalte); border-left: 6px solid var(--accion); padding: .75rem 1rem; margin: 1rem 0; }
+.mensaje p { margin: 0; }
+.mensaje.error { border-left-color: var(--error); background: #fbeeee; }
+
+table { width: 100%; border-collapse: collapse; margin: .75rem 0; }
+th, td { border: 1px solid var(--borde); padding: .65rem .75rem; text-align: left; vertical-align: middle; }
+thead th { background: var(--encabezado-tabla); }
+tbody th { font-weight: normal; }
+.numero { text-align: right; }
+tr.destacada { background: var(--resalte); font-weight: bold; }
+tr.destacada th { font-weight: bold; }
+.insignia { display: inline-block; border: 2px solid var(--texto); border-radius: 4px; padding: 0 .4rem;
+            font-size: .85rem; font-weight: bold; margin-left: .4rem; }
+.grafica { margin: 0; border: 1px solid var(--borde); padding: 1rem; }
+.mas-cercanas { padding-left: 1.2rem; }
+.separado { margin-top: 2rem; }
+.pie { border-top: 1px solid var(--borde); padding: 1rem 1.5rem; color: var(--texto-secundario); }
+
+@media (max-width: 40rem) {
+  .fila-campos { flex-direction: column; }
+  table { font-size: .9rem; }
+  th, td { padding: .45rem; }
+}

@@ -1,0 +1,10 @@
+{# Filtro por supermercado: la misma forma y posición en todas las pantallas. #}
+<nav class="filtro" aria-label="Filtrar por supermercado">
+  <span class="etiqueta-filtro">Mostrar:</span>
+  <ul>
+    <li><a class="chip" href="{{ url_filtro(None) }}" {% if not cadena %}aria-current="true"{% endif %}>Todos</a></li>
+    {% for c in cadenas %}
+    <li><a class="chip" href="{{ url_filtro(c) }}" {% if cadena == c %}aria-current="true"{% endif %}>{{ c }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>

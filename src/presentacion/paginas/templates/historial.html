@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}Historial de precios{% endblock %}
+{% block contenido %}
+<a class="boton secundario" href="{{ volver }}">&larr; Volver a los resultados</a>
+<h1>Historial de precios: {{ producto }}</h1>
+
+<form class="fechas" method="get" action="{{ url_for('historial', id_producto=id_producto) }}" data-espera>
+  <input type="hidden" name="producto" value="{{ producto }}">
+  <input type="hidden" name="volver" value="{{ volver }}">
+  {% if cadena %}<input type="hidden" name="cadena" value="{{ cadena }}">{% endif %}
+  <div class="campo">
+    <label for="fecha_inicio">Fecha inicial</label>
+    <input id="fecha_inicio" name="fecha_inicio" type="text" inputmode="numeric" value="{{ fecha_inicio or '' }}" aria-describedby="formato-inicio" required>
+    <p id="formato-inicio" class="ayuda">Formato: dd/mm/aaaa</p>
+  </div>
+  <div class="campo">
+    <label for="fecha_fin">Fecha final</label>
+    <input id="fecha_fin" name="fecha_fin" type="text" inputmode="numeric" value="{{ fecha_fin or '' }}" aria-describedby="formato-fin" required>
+    <p id="formato-fin" class="ayuda">Formato: dd/mm/aaaa</p>
+  </div>
+  <button type="submit" class="boton principal grande">Consultar</button>
+</form>
+
+{% macro url_filtro(c) %}{{ url_for('historial', id_producto=id_producto, producto=producto, volver=volver, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, cadena=c) }}{% endmacro %}
+{% include "_filtro.html" %}
+{% include "_mensaje.html" %}
+
+{% if series %}
+<h2>Evolución del precio</h2>
+<figure class="grafica">
+  <canvas id="grafica-historial" role="img" aria-label="Diagrama de líneas con la evolución del precio. Los mismos datos se presentan en la tabla siguiente."></canvas>
+</figure>
+<script id="datos-historial" type="application/json">{{ series|tojson }}</script>
+
+<h2>Los mismos datos en tabla</h2>
+<table>
+  <caption>Último precio registrado en cada mes</caption>
+  <thead>
+    <tr><th scope="col">Mes</th>{% for c in cadenas_con_datos %}<th scope="col" class="numero">{{ c }}</th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+    {% for fila in tabla %}
+    <tr><th scope="row">{{ fila.mes }}</th>{% for c in cadenas_con_datos %}<td class="numero">{{ pesos(fila.get(c)) or 'Sin registro' }}</td>{% endfor %}</tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if series %}
+<script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/historial.js') }}"></script>
+{% endif %}
+{% endblock %}

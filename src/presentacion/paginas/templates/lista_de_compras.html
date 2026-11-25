@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block titulo %}Lista de compras{% endblock %}
+{% block contenido %}
+<h1>Evaluar lista de compras</h1>
+
+<form class="agregar" method="post" action="{{ url_for('agregar_producto') }}">
+  <div class="campo ancho">
+    <label for="nombre">Producto</label>
+    <input id="nombre" name="nombre" type="text" value="{{ nombre or '' }}" required aria-describedby="ejemplo-lista" autocomplete="off">
+  </div>
+  <div class="campo">
+    <label for="cantidad">Cantidad</label>
+    <input id="cantidad" name="cantidad" type="number" min="1" step="1" value="{{ cantidad or 1 }}" required>
+  </div>
+  <button type="submit" class="boton secundario grande">Agregar a la lista</button>
+  <p id="ejemplo-lista" class="ayuda">Ejemplo: arroz blanco 500 g, leche entera 1 L.</p>
+</form>
+
+{% include "_mensaje.html" %}
+
+<h2>Mi lista ({{ items|length }} {{ 'producto' if items|length == 1 else 'productos' }})</h2>
+{% if items %}
+<table>
+  <caption class="oculto">Productos de la lista de compras</caption>
+  <thead><tr><th scope="col">Producto</th><th scope="col" class="numero">Cantidad</th><th scope="col">Acción</th></tr></thead>
+  <tbody>
+    {% for i in items %}
+    <tr>
+      <th scope="row">{{ i.producto.descripcion }}</th>
+      <td class="numero">{{ i.cantidad }}</td>
+      <td>
+        <form method="post" action="{{ url_for('quitar_producto') }}">
+          <input type="hidden" name="nombre" value="{{ i.producto.descripcion }}">
+          <button type="submit" class="boton secundario">Quitar<span class="oculto"> {{ i.producto.descripcion }}</span></button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Su lista está vacía. Agregue los productos que desea evaluar.</p>
+{% endif %}
+
+<form method="post" action="{{ url_for('evaluar_lista') }}" data-espera>
+  <button type="submit" class="boton principal grande">Evaluar lista</button>
+</form>
+
+{% if costos %}
+<h2>Costo total de la lista por supermercado</h2>
+<table id="tabla-costos">
+  <caption class="oculto">Costo total de la lista en cada supermercado</caption>
+  <thead>
+    <tr>
+      <th scope="col">N.º</th><th scope="col">Supermercado</th><th scope="col" class="numero">Costo total</th>
+      <th scope="col">Observación</th><th scope="col">Sucursal más cercana</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in costos %}
+    <tr class="{{ 'destacada' if c.esLaMasEconomica }}">
+      <td>{{ loop.index }}</td>
+      <th scope="row">{{ c.cadena.nombre }}{% if c.esLaMasEconomica %} <span class="insignia">Opción más económica</span>{% endif %}</th>
+      <td class="numero">{{ pesos(c.costoTotal) }}</td>
+      <td>{% if c.incluyeTodos %}Incluye todos los productos{% else %}No incluye: {{ c.noIncluidos|map(attribute='producto.descripcion')|join(', ') }}{% endif %}</td>
+      <td data-sucursal="{{ c.cadena.nombre }}">—</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="ayuda">La distancia se muestra solo si usted autoriza el uso de su ubicación. Su ubicación no se guarda.</p>
+<button type="button" class="boton secundario" id="ver-sucursales" data-url="{{ url_for('tiendas_datos') }}">Ver la sucursal más cercana de cada supermercado</button>
+<div id="mensaje-ubicacion" role="status" aria-live="polite"></div>
+{% endif %}
+
+<form method="post" action="{{ url_for('nueva_lista') }}" class="separado">
+  <button type="submit" class="boton secundario">Empezar una lista nueva</button>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/ubicacion.js') }}"></script>{% endblock %}

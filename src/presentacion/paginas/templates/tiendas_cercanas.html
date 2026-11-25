@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}Tiendas cercanas{% endblock %}
+{% block contenido %}
+<h1>Ubicar tiendas cercanas</h1>
+<p>Para ordenar las sucursales por distancia, el sistema solicita el permiso de su ubicación. Su ubicación solo se usa en esta consulta y no se guarda.</p>
+
+<form id="form-ubicacion" method="post" action="{{ url_for('tiendas_ubicar') }}">
+  <input type="hidden" name="latitud" id="latitud">
+  <input type="hidden" name="longitud" id="longitud">
+  <button type="button" class="boton principal grande" id="usar-ubicacion">Usar mi ubicación</button>
+</form>
+
+{% include "_mensaje.html" %}
+
+{% if mas_cercana %}
+<h2>Sucursal más cercana de cada supermercado</h2>
+<ul class="mas-cercanas">
+  {% for cadena, t in mas_cercana.items() %}
+  <li><strong>{{ cadena }}:</strong> {{ t.nombre }}, a {{ '%.1f'|format(t.distancia_km)|replace('.', ',') }} km</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if tiendas %}
+<table>
+  <caption class="oculto">Sucursales a menos de {{ radio }} km, de la más cercana a la más lejana</caption>
+  <thead><tr><th scope="col">N.º</th><th scope="col">Sucursal</th><th scope="col">Supermercado</th><th scope="col">Dirección</th><th scope="col" class="numero">Distancia</th></tr></thead>
+  <tbody>
+    {% for t in tiendas %}
+    <tr class="{{ 'destacada' if loop.first }}">
+      <td>{{ loop.index }}</td>
+      <th scope="row">{{ t.nombre }}</th>
+      <td>{{ t.cadena }}</td>
+      <td>{{ t.direccion }}</td>
+      <td class="numero">{% if t.distancia_km < 1 %}{{ (t.distancia_km * 1000)|round|int }} m{% else %}{{ '%.1f'|format(t.distancia_km)|replace('.', ',') }} km{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/ubicacion.js') }}"></script>{% endblock %}
