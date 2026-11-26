@@ -2,7 +2,7 @@
  * Estilos de la interfaz (sección 3.1.2 del Manual del sistema):
  * texto oscuro sobre fondo claro (contraste WCAG 2.1 AA), una sola familia
  * tipográfica, texto base amplio, un único color para las acciones y
- * alineación uniforme a la izquierda.
+ * alineación uniforme a la izquierda dentro de un contenido centrado en la pantalla.
  */
 :root {
   --texto: #1a1a1a;
@@ -29,12 +29,12 @@ a { color: var(--accion); }
 
 .encabezado {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
-  padding: 1rem 1.5rem; border-bottom: 3px solid var(--accion);
+  padding: 1rem max(1.5rem, calc((100% - 70rem) / 2 + 1.5rem)); border-bottom: 3px solid var(--accion);
 }
 .marca { margin: 0; font-size: 1.4rem; font-weight: bold; color: var(--accion); }
 .menu { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0; padding: 0; list-style: none; }
 
-main { max-width: 70rem; padding: 1.5rem; outline: none; }
+main { max-width: 70rem; margin: 0 auto; padding: 1.5rem; outline: none; }
 h1 { font-size: 2rem; margin: .5rem 0 1.25rem; }
 h2 { font-size: 1.35rem; margin: 1.75rem 0 .75rem; }
 
@@ -84,7 +84,7 @@ tr.destacada th { font-weight: bold; }
 .grafica { margin: 0; border: 1px solid var(--borde); padding: 1rem; }
 .mas-cercanas { padding-left: 1.2rem; }
 .separado { margin-top: 2rem; }
-.pie { border-top: 1px solid var(--borde); padding: 1rem 1.5rem; color: var(--texto-secundario); }
+.pie { border-top: 1px solid var(--borde); padding: 1rem max(1.5rem, calc((100% - 70rem) / 2 + 1.5rem)); color: var(--texto-secundario); }
 
 @media (max-width: 40rem) {
   .fila-campos { flex-direction: column; }
