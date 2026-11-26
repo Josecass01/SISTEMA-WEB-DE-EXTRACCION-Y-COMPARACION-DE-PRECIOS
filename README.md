@@ -107,6 +107,6 @@ Variables opcionales:
 
 ## Tecnologías
 
-Python 3.13, Flask 3.1, Gunicorn 23, SQLite, Requests y Beautiful Soup (Olímpica),
+Python 3.13, Flask 3.1, Gunicorn 23, SQLite, Requests (Olímpica),
 Playwright con Chromium (D1), schedule (programador de tareas), Chart.js 4.4 (gráfica del historial)
 y Docker.
